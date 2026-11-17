@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J.A.R.V.I.S.</title>
+    <style>
+        body { background: #070b14; color: #00f0ff; font-family: sans-serif; padding: 15px; display: flex; flex-direction: column; justify-content: space-between; height: 95vh; margin: 0; box-sizing: border-box; }
+        .orb { width: 100px; height: 100px; border-radius: 50%; border: 3px solid #00f0ff; margin: 15px auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px #00f0ff; font-weight: bold; font-size: 16px; cursor: pointer; }
+        .card { background: #10182b; border: 1px solid #1e3a5f; border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+        .label { font-size: 11px; color: #6c8ebf; margin-bottom: 5px; }
+        .text { font-size: 16px; color: #fff; line-height: 1.4; }
+        .row { display: flex; gap: 8px; }
+        input { flex: 1; background: #10182b; border: 1px solid #00f0ff; color: #fff; padding: 14px; border-radius: 25px; font-size: 16px; outline: none; }
+        button { background: #00f0ff; color: #000; border: none; padding: 0 20px; border-radius: 25px; font-weight: bold; font-size: 18px; }
+    </style>
+</head>
+<body>
+    <div style="text-align:center;">
+        <h3 style="margin:0;">J.A.R.V.I.S.</h3>
+        <div class="orb" onclick="listen()">ПУСК</div>
+    </div>
+
+    <div style="flex:1;">
+        <div class="card">
+            <div class="label">ВЫ СКАЗАЛИ:</div>
+            <div id="q" class="text">...</div>
+        </div>
+        <div class="card">
+            <div class="label">ОТВЕТ:</div>
+            <div id="a" class="text">Нажмите ПУСК или продиктуйте текст через микрофон на клавиатуре.</div>
+        </div>
+    </div>
+
+    <div class="row">
+        <input id="inp" type="text" placeholder="Нажмите сюда и диктуйте..." onkeydown="if(event.key==='Enter') ask()">
+        <button onclick="ask()">➤</button>
+    </div>
+
+    <script>
+        function reply(text) {
+            if (!text) return;
+            document.getElementById('q').innerText = text;
+            let t = text.toLowerCase();
+            let ans = "Команда принята: " + text;
+
+            if (t.includes("привет") || t.includes("джарвис")) ans = "К вашим услугам, сэр. Все системы в норме.";
+            else if (t.includes("время") || t.includes("час")) ans = "Сейчас " + new Date().toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'});
+            else if (t.includes("дата") || t.includes("число")) ans = "Сегодня " + new Date().toLocaleDateString('ru-RU');
+            else if (t.includes("погода")) ans = "Для точного прогноза лучше уточнить у метеослужб, сэр.";
+            else if (t.includes("спасибо")) ans = "Всегда рад помочь, сэр.";
+
+            document.getElementById('a').innerText = ans;
+
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                let u = new SpeechSynthesisUtterance(ans);
+                u.lang = 'ru-RU';
+                window.speechSynthesis.speak(u);
+            }
+        }
+
+        function ask() {
+            let inp = document.getElementById('inp');
+            reply(inp.value.trim());
+            inp.value = "";
+        }
+
+        function listen() {
+            let SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SR) {
+                document.getElementById('a').innerText = "Используйте микрофон на клавиатуре телефона в поле ниже.";
+                document.getElementById('inp').focus();
+                return;
+            }
+            let r = new SR();
+            r.lang = 'ru-RU';
+            r.onresult = (e) => reply(e.results[0][0].transcript);
+            r.onerror = () => {
+                document.getElementById('a').innerText = "Микрофон страницы недоступен в этом режиме. Нажмите на поле ввода ниже и нажмите микрофон на клавиатуре.";
+                document.getElementById('inp').focus();
+            };
+            r.start();
+        }
+    </script>
+</body>
+</html>
